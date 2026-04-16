@@ -6,49 +6,59 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>WAMOT LAB</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
 :root {
   --bg-color: #0f172a;
-  --card-bg: rgba(255,255,255,0.05);
-  --text-color: white;
+  --card-bg: rgba(255, 255, 255, 0.03);
+  --text-color: #f8fafc;
   --accent-color: #38bdf8;
-  --status-good: #22c55e;
+  --status-good: #10b981;
   --status-warn: #f59e0b;
   --status-bad: #ef4444;
+  --button-grad: linear-gradient(135deg, #3b82f6, #06b6d4);
+  --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
 body.light-theme {
-  --bg-color: #f1f5f9;
-  --card-bg: rgba(255,255,255,0.8);
+  --bg-color: #f8fafc;
+  --card-bg: rgba(255, 255, 255, 0.9);
   --text-color: #0f172a;
   --accent-color: #0284c7;
+  --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
 
 body {
   margin: 0;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Outfit', 'Segoe UI', sans-serif;
   background-color: var(--bg-color);
   color: var(--text-color);
-  transition: all 0.3s ease;
-  -webkit-text-size-adjust: 100%;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 100vh;
 }
 
 /* Glassmorphism Cards */
 .card {
   background: var(--card-bg);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.1);
-  padding: 20px;
-  border-radius: 20px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 24px;
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease;
 }
 
-/* Dashboard Grid Layout */
+.card:hover {
+  transform: translateY(-2px);
+}
+
+/* Dashboard Layout */
 .dashboard {
   display: none;
-  padding: 20px;
+  padding: 24px;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -57,141 +67,232 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  background: var(--button-grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
 }
 
-/* Specific elements */
-h2 { color: var(--accent-color); }
-.status { padding: 5px 12px; border-radius: 20px; font-weight: bold; }
-.good { background: var(--status-good); color: white; }
-.warn { background: var(--status-warn); color: white; }
-.bad { background: var(--status-bad); color: white; }
+h2 { 
+  color: var(--accent-color);
+  margin-top: 0;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-/* LOGIN UI */
+.status { 
+  display: inline-block;
+  padding: 6px 14px; 
+  border-radius: 12px; 
+  font-weight: 600; 
+  font-size: 0.85rem;
+  margin-top: 10px;
+}
+.good { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
+.warn { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
+.bad { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+
+/* Login UI Fix */
 .login-container {
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 15px;
-  background: radial-gradient(circle at center, #1e293b, #0f172a);
+  padding: 20px;
+  background: radial-gradient(circle at top right, #1e293b, #0f172a);
 }
 
 .login-card {
   background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(25px);
+  backdrop-filter: blur(20px);
   padding: 40px;
-  border-radius: 30px;
+  border-radius: 32px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   width: 100%;
-  max-width: 350px;
-  text-align: center;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-}
-
-.login-card h2 {
-  color: #fff;
-  font-size: 2rem;
-  margin-bottom: 25px;
+  max-width: 380px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
 .input-group {
-  position: relative;
   margin-bottom: 20px;
+  position: relative;
 }
 
 .input-group input {
   width: 100%;
-  padding: 15px 20px;
-  box-sizing: border-box;
-  border-radius: 15px;
-  border: none;
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.05);
   color: white;
-  font-size: 16px;
+  font-size: 1rem;
+  transition: 0.3s;
+  box-sizing: border-box;
 }
 
-.toggle-password {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: #94a3b8;
+.input-group input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.login-btn {
+.login-btn, .action-btn {
   width: 100%;
-  padding: 15px;
-  border-radius: 15px;
+  padding: 16px;
+  border-radius: 16px;
   border: none;
-  background: linear-gradient(135deg, #2563eb, #06b6d4);
+  background: var(--button-grad);
   color: white;
-  font-size: 18px;
-  font-weight: bold;
+  font-weight: 700;
   cursor: pointer;
+  transition: 0.3s;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
 }
 
 .icon-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: white;
-  padding: 10px 15px;
-  border-radius: 50px;
+  background: var(--card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-color);
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
   cursor: pointer;
-  margin-left: 5px;
+  transition: 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mode-buttons {
   display: flex;
-  gap: 10px;
-  margin-top: 15px;
+  gap: 12px;
+  margin-top: 20px;
 }
 
 .mode-buttons button {
   flex: 1;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-color);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px;
+  border-radius: 14px;
   cursor: pointer;
+  font-weight: 600;
   transition: 0.3s;
 }
 
-.mode-buttons button:hover {
-  background: var(--accent-color);
+.mode-buttons button.active {
+  background: var(--button-grad);
+  color: white;
+  border: none;
 }
 
-/* ... existing switch styles ... */
+/* Toast Notifications */
+#notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  padding: 16px 24px;
+  border-radius: 16px;
+  background: #1e293b;
+  color: white;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideIn 0.3s ease forwards;
+  border-left: 4px solid var(--accent-color);
+  min-width: 250px;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.toast.alert { border-left-color: var(--status-bad); }
+
+/* Custom Switch */
+.switch-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 15px 0;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
+}
+
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(255,255,255,0.1);
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px; width: 18px;
+  left: 4px; bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider { background: var(--status-good); }
+input:checked + .slider:before { transform: translateX(24px); }
 
 </style>
 </head>
 
 <body>
 
+<div id="notification-container"></div>
+
 <div class="login-container" id="loginScreen">
   <div class="login-card">
-    <h2>💧 WAMOT</h2>
+    <h1 style="text-align:center; color:white; margin-bottom:30px;"><i class="fas fa-water"></i> WAMOT</h1>
     <div class="input-group">
       <input id="device_id" placeholder="Device ID">
     </div>
     <div class="input-group">
       <input id="password" type="password" placeholder="Password">
-      <i class="fas fa-eye toggle-password" onclick="togglePassword()"></i>
-    </div>
-    <button class="login-btn" onclick="login()">Access Device</button>
-  </div>
-</div>
-
-    <div class="input-group">
-      <input id="password" type="password" placeholder="Password" id="passwordField">
       <i class="fas fa-eye toggle-password" onclick="togglePassword()"></i>
     </div>
     <button class="login-btn" onclick="login()">Access Device</button>
@@ -229,9 +330,9 @@ h2 { color: var(--accent-color); }
         </label>
         <p id="switchLabel">OFF</p>
       </div>
-      <div class="mode-buttons">
-        <button onclick="setMode('MANUAL')">Manual</button>
-        <button onclick="setMode('AUTO')">Auto</button>
+      <div class="mode-buttons" id="modeButtons">
+        <button id="btn-manual" onclick="setMode('MANUAL')">Manual</button>
+        <button id="btn-auto" onclick="setMode('AUTO')">Auto</button>
       </div>
     </div>
 
@@ -272,6 +373,16 @@ function openSettings() {
   
   if (tdsThreshold) localStorage.setItem('tdsThreshold', tdsThreshold);
   if (levelThreshold) localStorage.setItem('levelThreshold', levelThreshold);
+  notify("Settings Updated", "info");
+}
+
+function notify(msg, type = "info") {
+  const container = document.getElementById("notification-container");
+  const toast = document.createElement("div");
+  toast.className = `toast ${type === 'alert' ? 'alert' : ''}`;
+  toast.innerHTML = `<i class="fas ${type === 'alert' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i> <span>${msg}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
 }
 
 function checkThresholds(tds, level) {
@@ -281,12 +392,9 @@ function checkThresholds(tds, level) {
   if (tds > tdsThreshold || level < levelThreshold) {
      const lastAlert = localStorage.getItem('lastAlert');
      if (!lastAlert || (Date.now() - lastAlert > 600000)) { 
-         alert("⚠️ Alert! TDS: " + tds + ", Level: " + level);
+         notify(`⚠️ Alert! High TDS: ${tds} or Low Level: ${level}`, "alert");
          localStorage.setItem('lastAlert', Date.now());
      }
-  }
-}
-
   }
 }
 
@@ -305,8 +413,7 @@ async function login() {
 
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("dashboard").style.display = "block";
-  document.getElementById("connectionStatus").className = "status good";
-  document.getElementById("connectionStatus").innerHTML = '<i class="fas fa-circle"></i> Online';
+  notify("Connected Successfully", "info");
 
   getData();
   loadHistory();
@@ -385,6 +492,9 @@ function toggleRelay() {
 
 function setMode(mode) {
   manualOverride = true;
+  
+  document.getElementById("btn-manual").classList.toggle("active", mode === "MANUAL");
+  document.getElementById("btn-auto").classList.toggle("active", mode === "AUTO");
 
   if (mode === "AUTO") {
     document.getElementById("switchContainer").classList.add("disabled");
@@ -392,6 +502,7 @@ function setMode(mode) {
     setRelay("AUTO");
   } else {
     document.getElementById("switchContainer").classList.remove("disabled");
+    notify("Switched to Manual Mode");
   }
 
   setTimeout(() => manualOverride = false, 3000);
@@ -468,8 +579,6 @@ setInterval(() => {
     getRelayState();
   }
 }, 5000);
-</script>
-
 </script>
 
 <script>
