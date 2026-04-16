@@ -73,6 +73,71 @@ h2 { color: var(--accent-color); }
 .warn { background: var(--status-warn); color: white; }
 .bad { background: var(--status-bad); color: white; }
 
+/* LOGIN UI */
+.login-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 15px;
+  background: radial-gradient(circle at center, #1e293b, #0f172a);
+}
+
+.login-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(25px);
+  padding: 40px;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
+  max-width: 350px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.login-card h2 {
+  color: #fff;
+  font-size: 2rem;
+  margin-bottom: 25px;
+}
+
+.input-group {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 15px 20px;
+  box-sizing: border-box;
+  border-radius: 15px;
+  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 16px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #94a3b8;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 15px;
+  border-radius: 15px;
+  border: none;
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
 /* ... existing switch styles ... */
 
 </style>
@@ -83,9 +148,22 @@ h2 { color: var(--accent-color); }
 <div class="login-container" id="loginScreen">
   <div class="login-card">
     <h2>💧 WAMOT</h2>
-    <input id="device_id" placeholder="Device ID">
-    <input id="password" type="password" placeholder="Password">
-    <button onclick="login()">Access Device</button>
+    <div class="input-group">
+      <input id="device_id" placeholder="Device ID">
+    </div>
+    <div class="input-group">
+      <input id="password" type="password" placeholder="Password">
+      <i class="fas fa-eye toggle-password" onclick="togglePassword()"></i>
+    </div>
+    <button class="login-btn" onclick="login()">Access Device</button>
+  </div>
+</div>
+
+    <div class="input-group">
+      <input id="password" type="password" placeholder="Password" id="passwordField">
+      <i class="fas fa-eye toggle-password" onclick="togglePassword()"></i>
+    </div>
+    <button class="login-btn" onclick="login()">Access Device</button>
   </div>
 </div>
 
@@ -143,6 +221,18 @@ let historyData = [];
 
 function toggleTheme() {
   document.body.classList.toggle('light-theme');
+}
+
+function togglePassword() {
+  const passwordField = document.getElementById("password");
+  const icon = document.querySelector(".toggle-password");
+  if (passwordField.type === "password") {
+    passwordField.type = "text";
+    icon.className = "fas fa-eye-slash toggle-password";
+  } else {
+    passwordField.type = "password";
+    icon.className = "fas fa-eye toggle-password";
+  }
 }
 
 function openSettings() {
