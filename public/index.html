@@ -138,6 +138,37 @@ h2 { color: var(--accent-color); }
   cursor: pointer;
 }
 
+.icon-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 50px;
+  cursor: pointer;
+  margin-left: 5px;
+}
+
+.mode-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.mode-buttons button {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.mode-buttons button:hover {
+  background: var(--accent-color);
+}
+
 /* ... existing switch styles ... */
 
 </style>
@@ -171,10 +202,10 @@ h2 { color: var(--accent-color); }
   <div class="dashboard-header">
     <h1><i class="fas fa-water"></i> WAMOT</h1>
     <div>
-      <button onclick="toggleTheme()" style="width: auto; padding: 10px 15px;"><i class="fas fa-adjust"></i></button>
-      <button onclick="openSettings()" style="width: auto; padding: 10px 15px;"><i class="fas fa-cog"></i></button>
-      <span id="connectionStatus" class="status warn"><i class="fas fa-circle"></i> Offline</span>
+      <button onclick="toggleTheme()" class="icon-btn"><i class="fas fa-adjust"></i></button>
+      <button onclick="openSettings()" class="icon-btn"><i class="fas fa-cog"></i></button>
     </div>
+
   </div>
 
   <div class="grid">
@@ -236,20 +267,26 @@ function togglePassword() {
 }
 
 function openSettings() {
-  const threshold = prompt("Enter TDS Alert Threshold:", localStorage.getItem('tdsThreshold') || 600);
-  if (threshold) {
-    localStorage.setItem('tdsThreshold', threshold);
+  const tdsThreshold = prompt("Enter TDS Alert Threshold:", localStorage.getItem('tdsThreshold') || 600);
+  const levelThreshold = prompt("Enter Water Level Alert Threshold:", localStorage.getItem('levelThreshold') || 20);
+  
+  if (tdsThreshold) localStorage.setItem('tdsThreshold', tdsThreshold);
+  if (levelThreshold) localStorage.setItem('levelThreshold', levelThreshold);
+}
+
+function checkThresholds(tds, level) {
+  const tdsThreshold = localStorage.getItem('tdsThreshold') || 600;
+  const levelThreshold = localStorage.getItem('levelThreshold') || 20;
+
+  if (tds > tdsThreshold || level < levelThreshold) {
+     const lastAlert = localStorage.getItem('lastAlert');
+     if (!lastAlert || (Date.now() - lastAlert > 600000)) { 
+         alert("⚠️ Alert! TDS: " + tds + ", Level: " + level);
+         localStorage.setItem('lastAlert', Date.now());
+     }
   }
 }
 
-function checkThresholds(tds) {
-  const threshold = localStorage.getItem('tdsThreshold') || 600;
-  if (tds > threshold) {
-     const lastAlert = localStorage.getItem('lastAlert');
-     if (!lastAlert || (Date.now() - lastAlert > 600000)) { 
-         alert("⚠️ TDS Threshold Exceeded: " + tds);
-         localStorage.setItem('lastAlert', Date.now());
-     }
   }
 }
 
@@ -289,7 +326,7 @@ async function getData() {
   document.getElementById("level").innerText = data.water_level ?? "--";
 
   updateWaterStatus(data.tds);
-  checkThresholds(data.tds);
+  checkThresholds(data.tds, data.water_level);
 }
 
 function updateWaterStatus(tds) {
