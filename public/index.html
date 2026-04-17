@@ -542,9 +542,10 @@ async function loadHistory() {
   historyData = await res.json();
 
   const labels = historyData.map(d => new Date(d.created_at).toLocaleTimeString());
-  const values = historyData.map(d => d.water_level);
+  const levelData = historyData.map(d => d.water_level);
+  const tdsData = historyData.map(d => d.tds);
 
-  drawChart(labels, values);
+  drawChart(labels, levelData, tdsData);
 }
 
 function exportData() {
@@ -563,7 +564,7 @@ function exportData() {
   a.click();
 }
 
-function drawChart(labels, values) {
+function drawChart(labels, levelData, tdsData) {
   if (chart) chart.destroy();
 
   const ctx = document.getElementById("chart").getContext("2d");
@@ -572,19 +573,58 @@ function drawChart(labels, values) {
     type: "line",
     data: {
       labels,
-      datasets: [{
-        label: "Water Level",
-        data: values,
-        borderColor: "#38bdf8",
-        backgroundColor: "rgba(56,189,248,0.2)",
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0
-      }]
+      datasets: [
+        {
+          label: "Water Level (%)",
+          data: levelData,
+          borderColor: "#38bdf8",
+          backgroundColor: "rgba(56,189,248,0.1)",
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          yAxisID: 'y'
+        },
+        {
+          label: "TDS (ppm)",
+          data: tdsData,
+          borderColor: "#10b981",
+          backgroundColor: "transparent",
+          borderDash: [5, 5],
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+          yAxisID: 'y1'
+        }
+      ]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          title: { display: true, text: 'Level (%)', color: '#94a3b8' }
+        },
+        y1: {
+          type: 'linear',
+          display: true,
+          position: 'right',
+          grid: { drawOnChartArea: false },
+          title: { display: true, text: 'TDS (ppm)', color: '#94a3b8' }
+        },
+        x: {
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        }
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: { color: '#94a3b8', font: { family: 'Outfit' } }
+        }
+      }
     }
   });
 }
@@ -595,6 +635,10 @@ setInterval(() => {
     getRelayState();
   }
 }, 5000);
+
+setInterval(() => {
+  if (device_id) loadHistory();
+}, 60000); // Update history every 1 minute
 </script>
 
 <script>
