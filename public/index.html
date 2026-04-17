@@ -115,24 +115,31 @@ h2 { color: var(--primary); margin-top: 0; font-weight: 700; display: flex; alig
   position: relative;
   margin: 15px 0;
 }
-.input-group i {
+.input-group i:not(.password-toggle) {
   position: absolute;
   left: 15px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-muted);
+  pointer-events: none;
+  z-index: 2;
 }
 .password-toggle {
   position: absolute;
   right: 15px;
+  left: auto;
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
   color: var(--text-muted);
+  z-index: 2;
+  padding: 5px;
 }
 input {
   width: 100%;
   padding: 14px 45px 14px 45px;
+  position: relative;
+  z-index: 1;
   border-radius: 12px;
   border: 1px solid var(--card-border);
   background: var(--input-bg);
@@ -330,6 +337,41 @@ input:checked + .slider:before { transform: translateX(28px); }
 }
 canvas { width: 100% !important; height: 100% !important; }
 
+/* MODAL STYLE */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 20px;
+}
+.modal {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 450px;
+  padding: 30px;
+  box-shadow: var(--shadow);
+  animation: modalIn 0.3s ease-out;
+}
+@keyframes modalIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+.modal-header h2 { margin: 0; font-size: 22px; }
+
 @media (max-width: 900px) {
   .layout { flex-direction: column; }
   .settings-grid { grid-template-columns: 1fr; }
@@ -346,6 +388,44 @@ canvas { width: 100% !important; height: 100% !important; }
 
 <div id="toastContainer" class="toast-container"></div>
 
+<div class="modal-overlay" id="settingsModal" onclick="if(event.target==this) toggleSettings()">
+  <div class="modal">
+    <div class="modal-header">
+      <h2><i class="fa-solid fa-gear"></i> System Settings</h2>
+      <button class="icon-btn" onclick="toggleSettings()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    
+    <div style="margin-bottom: 25px;">
+      <h3 style="font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">Water Thresholds</h3>
+      <div class="settings-grid">
+        <div class="settings-group">
+          <label>Max Safe TDS (ppm)</label>
+          <input type="number" id="tdsLimit" value="300">
+        </div>
+        <div class="settings-group">
+          <label>Danger TDS (ppm)</label>
+          <input type="number" id="tdsDanger" value="600">
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 25px;">
+      <h3 style="font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">Interface Preference</h3>
+      <div class="settings-group" style="display: flex; align-items: center; justify-content: space-between; background: var(--input-bg); padding: 12px; border-radius: 12px;">
+         <span style="font-weight: 500;">Refresh Interval (Sec)</span>
+         <select id="refreshRate" style="background: transparent; color: var(--text-main); border: 1px solid var(--card-border); border-radius: 6px; padding: 5px;">
+            <option value="5000" selected>5s</option>
+            <option value="10000">10s</option>
+            <option value="30000">30s</option>
+         </select>
+      </div>
+    </div>
+
+    <button class="save-btn" onclick="saveThresholds()" style="width: 100%; border-radius: 12px; padding: 15px; background: linear-gradient(45deg, var(--primary), #06b6d4);">
+      <i class="fa-solid fa-check"></i> Save All Changes
+    </button>
+  </div>
+</div>
 <div class="login-container" id="loginScreen">
   <div class="login-card">
     <h2><i class="fa-solid fa-droplet"></i> WAMOT Pro</h2>
@@ -374,8 +454,9 @@ canvas { width: 100% !important; height: 100% !important; }
       <div class="clock" id="clockDisplay">--:--:--</div>
     </div>
     <div class="topbar-right">
-      <i class="fa-solid fa-rotate sync-icon" id="syncIcon" title="Sync Status"></i>
+      <i class="fa-solid fa-rotate sync-icon" id="syncIcon" title="Sync Status" style="margin-right: 5px;"></i>
       <button class="icon-btn" onclick="toggleTheme()" title="Toggle Theme"><i class="fa-solid fa-moon" id="themeIcon"></i></button>
+      <button class="icon-btn" onclick="toggleSettings()" title="Settings"><i class="fa-solid fa-cog"></i></button>
       <button class="icon-btn" onclick="toggleFullscreen()" title="Fullscreen"><i class="fa-solid fa-expand" id="fullscreenIcon"></i></button>
       <button class="icon-btn" onclick="logout()" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></button>
     </div>
@@ -401,23 +482,6 @@ canvas { width: 100% !important; height: 100% !important; }
         <div class="progress-bar-container" style="background: var(--input-bg); height: 10px; border-radius: 5px; overflow: hidden; margin-top: 15px;">
             <div id="levelProgress" style="background: var(--primary); height: 100%; width: 0%; transition: width 0.5s;"></div>
         </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <h2><i class="fa-solid fa-gear"></i> Threshold Limits</h2>
-        </div>
-        <div class="settings-grid">
-          <div class="settings-group">
-            <label>Max Safe TDS (ppm)</label>
-            <input type="number" id="tdsLimit" value="300">
-          </div>
-          <div class="settings-group">
-            <label>Danger TDS (ppm)</label>
-            <input type="number" id="tdsDanger" value="600">
-          </div>
-        </div>
-        <button class="save-btn" onclick="saveThresholds()"><i class="fa-solid fa-check"></i> Save Limits</button>
       </div>
 
       <div class="card">
@@ -556,6 +620,15 @@ function toggleFullscreen() {
     }
 }
 
+function toggleSettings() {
+    const modal = document.getElementById('settingsModal');
+    if(modal.style.display === 'flex') {
+        modal.style.display = 'none';
+    } else {
+        modal.style.display = 'flex';
+    }
+}
+
 function loadThresholds() {
     if (localStorage.getItem('wamot_tdsSafe')) {
         limitSafeTds = parseInt(localStorage.getItem('wamot_tdsSafe'));
@@ -570,7 +643,17 @@ function saveThresholds() {
     limitDangerTds = parseInt(document.getElementById("tdsDanger").value);
     localStorage.setItem('wamot_tdsSafe', limitSafeTds);
     localStorage.setItem('wamot_tdsDanger', limitDangerTds);
-    showToast("Threshold limits saved successfully", "success");
+    
+    // Hande refresh interval update
+    const newInterval = parseInt(document.getElementById("refreshRate").value);
+    if(newInterval !== syncIntervalMs) {
+        clearInterval(syncTimer);
+        syncIntervalMs = newInterval;
+        startSyncTimer();
+    }
+
+    showToast("Settings saved successfully", "success");
+    toggleSettings();
     
     // Refresh status instantly with new bounds if we have a current TDS
     const currentTdsText = document.getElementById("tds").innerText;
@@ -863,12 +946,18 @@ function drawChart(labels, values) {
   });
 }
 
-// Periodic Updates
-setInterval(() => {
-  if (device_id) {
-    syncData();
-  }
-}, 5000);
+let syncIntervalMs = 5000;
+let syncTimer;
+
+function startSyncTimer() {
+    syncTimer = setInterval(() => {
+        if (device_id) {
+            syncData();
+        }
+    }, syncIntervalMs);
+}
+
+startSyncTimer();
 </script>
 
 <script>
