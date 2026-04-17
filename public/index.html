@@ -733,11 +733,17 @@ async function syncData() {
     const syncIcon = document.getElementById("syncIcon");
     if(syncIcon) syncIcon.classList.add("syncing");
     
-    await Promise.all([
-        getData(),
-        loadHistory(),
-        getRelayState()
-    ]);
+    try {
+        await Promise.all([
+            getData(),
+            loadHistory(),
+            getRelayState()
+        ]);
+        console.log("Sync complete: All data fetched.");
+    } catch (err) {
+        console.error("Sync partial failure:", err);
+        showToast("Network warning: Some data could not be updated.", "warn");
+    }
     
     if(syncIcon) setTimeout(() => { syncIcon.classList.remove("syncing"); }, 500);
 }
@@ -749,6 +755,12 @@ async function getData() {
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({ device_id, password })
       });
+      
+      if(!res.ok) {
+          const errMsg = await res.text();
+          throw new Error(`Data fetch failed: ${res.status} ${errMsg}`);
+      }
+
       const data = await res.json();
 
       let tdsVal = data.tds ?? "--";
@@ -890,10 +902,22 @@ async function loadHistory() {
         body: JSON.stringify({ device_id, password })
       });
 
-      const data = await res.json();
-      if(!Array.isArray(data)) return;
+      if(!res.ok) {
+          const errMsg = await res.text();
+          throw new Error(`History fetch failed: ${res.status} ${errMsg}`);
+      }
 
-      chartDataHistory = data; 
+      const data = await res.json();
+      if(!Array.isArray(data)) {
+          showToast("Database returned empty or invalid history.", "warn");
+          return;
+      }
+
+      chartDataHistory = data; // Crucial for export feature
+
+      if(data.length === 0) {
+          showToast("No history records found for this device.", "info");
+      }
 
       const labels = data.map(d => new Date(d.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
       const values = data.map(d => d.water_level);
