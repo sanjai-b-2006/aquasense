@@ -425,7 +425,7 @@ canvas { width: 100% !important; height: 100% !important; }
 }
 
 @media (max-width: 480px) {
-  .topbar-logo span { display: none; } /* Hide text if too small */
+  .topbar-logo { font-size: 16px; min-width: fit-content; }
   .icon-btn { width: 34px; height: 34px; font-size: 14px; }
   .value-display { font-size: 28px; }
 }
@@ -487,6 +487,10 @@ canvas { width: 100% !important; height: 100% !important; }
             <option value="10000">10s</option>
             <option value="30000">30s</option>
           </select>
+        </div>
+        <div class="settings-group" style="grid-column: span 2;">
+          <label>Weather Location (e.g. London)</label>
+          <input type="text" id="weatherLocation" placeholder="Empty for auto-detect" style="background: var(--input-bg); color: var(--text-main); border: 1px solid var(--card-border); border-radius: 6px; padding: 10px; width: 100%;">
         </div>
       </div>
     </div>
@@ -634,12 +638,14 @@ function startClock() {
 
 async function fetchWeather() {
     try {
-        const res = await fetch('https://wttr.in/?format=j1');
+        const city = localStorage.getItem('wamot_weatherCity') || "";
+        const res = await fetch(`https://wttr.in/${city}?format=j1`);
         const data = await res.json();
         const current = data.current_condition[0];
         const temp = current.temp_C;
         const hum = current.humidity;
         const desc = current.weatherDesc[0].value;
+        const locName = city ? city : "Current Location";
         document.getElementById('weatherDisplay').innerHTML = `<i class="fa-solid fa-temperature-half"></i> ${temp}°C | <i class="fa-solid fa-droplet"></i> ${hum}% | ${desc}`;
     } catch(e) {
         document.getElementById('weatherDisplay').innerText = "Weather Unavailable";
@@ -748,6 +754,7 @@ function loadThresholds() {
     document.getElementById("tankEmpty").value = tankEmptyDist;
     document.getElementById("tankFull").value = tankFullDist;
     document.getElementById("voiceMode").value = voiceEnabled ? "on" : "off";
+    document.getElementById("weatherLocation").value = localStorage.getItem('wamot_weatherCity') || "";
 }
 
 function saveThresholds() {
@@ -756,12 +763,17 @@ function saveThresholds() {
     tankEmptyDist = parseInt(document.getElementById("tankEmpty").value);
     tankFullDist = parseInt(document.getElementById("tankFull").value);
     voiceEnabled = document.getElementById("voiceMode").value === "on";
+    const city = document.getElementById("weatherLocation").value.trim();
     
     localStorage.setItem('wamot_tdsSafe', limitSafeTds);
     localStorage.setItem('wamot_tdsDanger', limitDangerTds);
     localStorage.setItem('wamot_tankEmpty', tankEmptyDist);
     localStorage.setItem('wamot_tankFull', tankFullDist);
     localStorage.setItem('wamot_voice', voiceEnabled ? "on" : "off");
+    localStorage.setItem('wamot_weatherCity', city);
+    
+    // Refresh weather immediately
+    fetchWeather();
     
     // Hande refresh interval update
     const newInterval = parseInt(document.getElementById("refreshRate").value);
