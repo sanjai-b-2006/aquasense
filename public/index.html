@@ -372,59 +372,33 @@ canvas { width: 100% !important; height: 100% !important; }
 }
 .modal-header h2 { margin: 0; font-size: 22px; }
 
-/* WATER TANK ANIMATION */
-.tank-visual {
-  width: 140px;
-  height: 140px;
-  margin: 15px auto;
-  position: relative;
-  border: 4px solid var(--text-muted);
-  border-radius: 15px 15px 10px 10px;
-  overflow: hidden;
+/* WEATHER & CLOCK UI */
+.weather-chip, .clock {
   background: var(--input-bg);
-  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-}
-.water {
-  position: absolute;
-  bottom: 0; left: 0; width: 100%;
-  background: linear-gradient(180deg, #38bdf8, #0369a1);
-  transition: height 1s ease-in-out;
-  z-index: 1;
-}
-.water::before {
-  content: "";
-  position: absolute;
-  top: -15px; left: 0; width: 200%; height: 20px;
-  background: rgba(255,255,255,0.2);
-  border-radius: 40%;
-  animation: wave 3s infinite linear;
-}
-@keyframes wave {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-/* WEATHER UI */
-.weather-chip {
-  background: var(--input-bg);
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: 20px;
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 13px;
   border: 1px solid var(--card-border);
+  font-weight: 500;
+  white-space: nowrap;
 }
+.weather-chip { color: var(--primary); }
+.clock { color: var(--text-muted); font-family: monospace; }
 
 @media (max-width: 900px) {
   .layout { flex-direction: column; }
   .settings-grid { grid-template-columns: 1fr; }
+  .topbar-left { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .topbar { padding: 20px; }
 }
+
 @media (max-width: 480px) {
-  .topbar { padding: 15px; }
-  .clock { display: none; }
-  .login-card { padding: 30px 20px; }
+  .topbar-right { width: 100%; justify-content: space-between; margin-top: 10px; }
   .value-display { font-size: 32px; }
+  .weather-chip, .clock { width: 100%; justify-content: center; }
 }
 </style>
 </head>
@@ -518,6 +492,7 @@ canvas { width: 100% !important; height: 100% !important; }
   <div class="topbar">
     <div class="topbar-left">
       <div class="topbar-logo"><i class="fa-solid fa-droplet"></i> WAMOT</div>
+      <div class="clock" id="clockDisplay">--:--:--</div>
       <div class="weather-chip" id="weatherDisplay">
         <i class="fa-solid fa-cloud-sun"></i> <span>Detecting...</span>
       </div>
@@ -545,20 +520,12 @@ canvas { width: 100% !important; height: 100% !important; }
 
       <div class="card">
         <div class="card-header">
-          <h2><i class="fa-solid fa-water"></i> Tank Visual</h2>
-        </div>
-        <div class="tank-visual">
-            <div class="water" id="tankWater" style="height: 0%;"></div>
+          <h2><i class="fa-solid fa-water"></i> Water Level</h2>
         </div>
         <div class="value-display" id="level">-- <span class="unit">%</span></div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <h2><i class="fa-solid fa-faucet-drip"></i> Daily Consumption</h2>
+        <div class="progress-bar-container" style="background: var(--input-bg); height: 12px; border-radius: 6px; overflow: hidden; margin-top: 15px; border: 1px solid var(--card-border);">
+            <div id="levelProgress" style="background: linear-gradient(90deg, var(--primary), #06b6d4); height: 100%; width: 0%; transition: width 0.8s ease-out;"></div>
         </div>
-        <div class="value-display" id="consumption" style="font-size: 32px; color: var(--warn);">-- <span class="unit">units</span></div>
-        <div style="font-size:12px; color: var(--text-muted); margin-top: 5px;">Estimated since last refill</div>
       </div>
 
       <div class="card">
@@ -625,7 +592,7 @@ window.onload = () => {
 function startClock() {
     setInterval(() => {
         const now = new Date();
-        // Clock is hidden now, but keeping internal time tracker
+        document.getElementById('clockDisplay').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
     }, 1000);
 }
 
@@ -892,12 +859,16 @@ async function getData() {
           let clampedLvl = Math.max(0, Math.min(100, Math.round(percent)));
           
           document.getElementById("level").innerHTML = `${clampedLvl} <span class="unit">%</span>`;
-          document.getElementById("tankWater").style.height = clampedLvl + "%";
+          document.getElementById("levelProgress").style.width = clampedLvl + "%";
           
-          if(clampedLvl < 20 && !window._lowWaterSpoken) {
-              speak("Warning: Water level is low. Please consider refilling.");
-              window._lowWaterSpoken = true;
-          } else if(clampedLvl >= 20) {
+          if(clampedLvl < 20) {
+              document.getElementById("levelProgress").style.background = "var(--danger)";
+              if(!window._lowWaterSpoken) {
+                  speak("Warning: Water level is low. Please consider refilling.");
+                  window._lowWaterSpoken = true;
+              }
+          } else {
+              document.getElementById("levelProgress").style.background = "linear-gradient(90deg, var(--primary), #06b6d4)";
               window._lowWaterSpoken = false;
           }
       }
@@ -1040,17 +1011,6 @@ async function loadHistory() {
       }
 
       chartDataHistory = data; 
-
-      // CONSUMPTION CALCULATION
-      if(data.length > 2) {
-          let totalDrop = 0;
-          for(let i=1; i<data.length; i++) {
-              let diff = data[i].water_level - data[i-1].water_level;
-              // If distance increases, water is dropping
-              if(diff > 0) totalDrop += diff;
-          }
-          document.getElementById('consumption').innerHTML = `${Math.round(totalDrop)} <span class="unit">units</span>`;
-      }
 
       const labels = data.map(d => new Date(d.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
       const values = data.map(d => d.water_level);
