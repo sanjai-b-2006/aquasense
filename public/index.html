@@ -181,9 +181,10 @@ button:active { transform: translateY(0); }
   border-bottom: 1px solid var(--card-border);
   margin-bottom: 20px;
 }
-.topbar-left { display: flex; align-items: center; gap: 15px; }
+.topbar-left, .topbar-right { display: flex; align-items: center; gap: 15px; }
+.topbar-widgets { display: contents; } /* Default desktop behavior */
+
 .topbar-logo { font-size: 20px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px;}
-.topbar-right { display: flex; align-items: center; gap: 15px; }
 .icon-btn {
   background: var(--input-bg);
   border: 1px solid var(--card-border);
@@ -388,17 +389,45 @@ canvas { width: 100% !important; height: 100% !important; }
 .weather-chip { color: var(--primary); }
 .clock { color: var(--text-muted); font-family: monospace; }
 
-@media (max-width: 900px) {
-  .layout { flex-direction: column; }
-  .settings-grid { grid-template-columns: 1fr; }
-  .topbar-left { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .topbar { padding: 20px; }
+/* MOBILE OPTIMIZATIONS (Clean Two-Row Layout) */
+@media (max-width: 768px) {
+  .layout { flex-direction: column; padding: 15px; }
+  .topbar { 
+    flex-direction: column; 
+    padding: 15px 20px; 
+    gap: 15px; 
+    align-items: stretch;
+  }
+  .topbar-left { 
+    justify-content: space-between; 
+    width: 100%; 
+  }
+  .topbar-right {
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .topbar-logo { font-size: 18px; }
+  
+  /* Create a widget row for mobile */
+  .topbar-widgets {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 5px;
+  }
+  .weather-chip, .clock { 
+    flex: 1; 
+    font-size: 12px; 
+    padding: 6px 10px;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 480px) {
-  .topbar-right { width: 100%; justify-content: space-between; margin-top: 10px; }
-  .value-display { font-size: 32px; }
-  .weather-chip, .clock { width: 100%; justify-content: center; }
+  .topbar-logo span { display: none; } /* Hide text if too small */
+  .icon-btn { width: 34px; height: 34px; font-size: 14px; }
+  .value-display { font-size: 28px; }
 }
 </style>
 </head>
@@ -491,18 +520,25 @@ canvas { width: 100% !important; height: 100% !important; }
   
   <div class="topbar">
     <div class="topbar-left">
-      <div class="topbar-logo"><i class="fa-solid fa-droplet"></i> WAMOT</div>
+      <div class="topbar-logo"><i class="fa-solid fa-droplet"></i> <span>WAMOT PRO</span></div>
+      <div class="topbar-right mobile-only-flex" style="display: none;">
+         <!-- This space is handled by the widget row below on mobile -->
+      </div>
+    </div>
+    
+    <div class="topbar-widgets" id="mobileWidgets">
       <div class="clock" id="clockDisplay">--:--:--</div>
       <div class="weather-chip" id="weatherDisplay">
         <i class="fa-solid fa-cloud-sun"></i> <span>Detecting...</span>
       </div>
     </div>
+
     <div class="topbar-right">
       <i class="fa-solid fa-rotate sync-icon" id="syncIcon" title="Sync Status" style="margin-right: 5px;"></i>
       <button class="icon-btn" onclick="toggleTheme()" title="Toggle Theme"><i class="fa-solid fa-moon" id="themeIcon"></i></button>
       <button class="icon-btn" onclick="toggleSettings()" title="Settings"><i class="fa-solid fa-cog"></i></button>
-      <button class="icon-btn" onclick="toggleFullscreen()" title="Fullscreen"><i class="fa-solid fa-expand" id="fullscreenIcon"></i></button>
-      <button class="icon-btn" onclick="logout()" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></button>
+      <button class="icon-btn" onclick="toggleFullscreen()" title="Fullscreen" class="desktop-only"><i class="fa-solid fa-expand" id="fullscreenIcon"></i></button>
+      <button class="icon-btn logout-btn" onclick="logout()" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></button>
     </div>
   </div>
 
