@@ -909,7 +909,8 @@ async function loadHistory() {
 
       const data = await res.json();
       if(!Array.isArray(data)) {
-          showToast("Database returned empty or invalid history.", "warn");
+          console.log("Invalid History Data:", data);
+          showToast(`Invalid Data: ${JSON.stringify(data).substring(0, 50)}...`, "warn");
           return;
       }
 
