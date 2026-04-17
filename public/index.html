@@ -372,6 +372,50 @@ canvas { width: 100% !important; height: 100% !important; }
 }
 .modal-header h2 { margin: 0; font-size: 22px; }
 
+/* WATER TANK ANIMATION */
+.tank-visual {
+  width: 140px;
+  height: 140px;
+  margin: 15px auto;
+  position: relative;
+  border: 4px solid var(--text-muted);
+  border-radius: 15px 15px 10px 10px;
+  overflow: hidden;
+  background: var(--input-bg);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+.water {
+  position: absolute;
+  bottom: 0; left: 0; width: 100%;
+  background: linear-gradient(180deg, #38bdf8, #0369a1);
+  transition: height 1s ease-in-out;
+  z-index: 1;
+}
+.water::before {
+  content: "";
+  position: absolute;
+  top: -15px; left: 0; width: 200%; height: 20px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 40%;
+  animation: wave 3s infinite linear;
+}
+@keyframes wave {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* WEATHER UI */
+.weather-chip {
+  background: var(--input-bg);
+  padding: 5px 12px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  border: 1px solid var(--card-border);
+}
+
 @media (max-width: 900px) {
   .layout { flex-direction: column; }
   .settings-grid { grid-template-columns: 1fr; }
@@ -395,7 +439,21 @@ canvas { width: 100% !important; height: 100% !important; }
       <button class="icon-btn" onclick="toggleSettings()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     
-    <div style="margin-bottom: 25px;">
+    <div style="margin-bottom: 20px;">
+      <h3 style="font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">Calibration</h3>
+      <div class="settings-grid">
+        <div class="settings-group">
+          <label>Tank Empty Dist (mm)</label>
+          <input type="number" id="tankEmpty" value="2000">
+        </div>
+        <div class="settings-group">
+          <label>Tank Full Dist (mm)</label>
+          <input type="number" id="tankFull" value="200">
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
       <h3 style="font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">Water Thresholds</h3>
       <div class="settings-grid">
         <div class="settings-group">
@@ -410,14 +468,23 @@ canvas { width: 100% !important; height: 100% !important; }
     </div>
 
     <div style="margin-bottom: 25px;">
-      <h3 style="font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">Interface Preference</h3>
-      <div class="settings-group" style="display: flex; align-items: center; justify-content: space-between; background: var(--input-bg); padding: 12px; border-radius: 12px;">
-         <span style="font-weight: 500;">Refresh Interval (Sec)</span>
-         <select id="refreshRate" style="background: transparent; color: var(--text-main); border: 1px solid var(--card-border); border-radius: 6px; padding: 5px;">
+      <h3 style="font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">Preferences</h3>
+      <div class="settings-grid">
+        <div class="settings-group">
+          <label>Voice Notifications</label>
+          <select id="voiceMode" style="background: var(--input-bg); color: var(--text-main); border: 1px solid var(--card-border); border-radius: 6px; padding: 10px; width: 100%;">
+            <option value="on">On (Female)</option>
+            <option value="off">Muted</option>
+          </select>
+        </div>
+        <div class="settings-group">
+          <label>Sync Rate (Sec)</label>
+          <select id="refreshRate" style="background: var(--input-bg); color: var(--text-main); border: 1px solid var(--card-border); border-radius: 6px; padding: 10px; width: 100%;">
             <option value="5000" selected>5s</option>
             <option value="10000">10s</option>
             <option value="30000">30s</option>
-         </select>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -451,7 +518,9 @@ canvas { width: 100% !important; height: 100% !important; }
   <div class="topbar">
     <div class="topbar-left">
       <div class="topbar-logo"><i class="fa-solid fa-droplet"></i> WAMOT</div>
-      <div class="clock" id="clockDisplay">--:--:--</div>
+      <div class="weather-chip" id="weatherDisplay">
+        <i class="fa-solid fa-cloud-sun"></i> <span>Detecting...</span>
+      </div>
     </div>
     <div class="topbar-right">
       <i class="fa-solid fa-rotate sync-icon" id="syncIcon" title="Sync Status" style="margin-right: 5px;"></i>
@@ -476,12 +545,20 @@ canvas { width: 100% !important; height: 100% !important; }
 
       <div class="card">
         <div class="card-header">
-          <h2><i class="fa-solid fa-water"></i> Water Level</h2>
+          <h2><i class="fa-solid fa-water"></i> Tank Visual</h2>
+        </div>
+        <div class="tank-visual">
+            <div class="water" id="tankWater" style="height: 0%;"></div>
         </div>
         <div class="value-display" id="level">-- <span class="unit">%</span></div>
-        <div class="progress-bar-container" style="background: var(--input-bg); height: 10px; border-radius: 5px; overflow: hidden; margin-top: 15px;">
-            <div id="levelProgress" style="background: var(--primary); height: 100%; width: 0%; transition: width 0.5s;"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-faucet-drip"></i> Daily Consumption</h2>
         </div>
+        <div class="value-display" id="consumption" style="font-size: 32px; color: var(--warn);">-- <span class="unit">units</span></div>
+        <div style="font-size:12px; color: var(--text-muted); margin-top: 5px;">Estimated since last refill</div>
       </div>
 
       <div class="card">
@@ -532,6 +609,9 @@ let currentMode = "AUTO";
 // SETTINGS (Defaults)
 let limitSafeTds = 300;
 let limitDangerTds = 600;
+let tankEmptyDist = 2000;
+let tankFullDist = 200;
+let voiceEnabled = true;
 let chartDataHistory = [];
 
 // INIT FEATURES ON LOAD
@@ -539,13 +619,36 @@ window.onload = () => {
     loadTheme();
     loadThresholds();
     startClock();
+    fetchWeather();
 };
 
 function startClock() {
     setInterval(() => {
         const now = new Date();
-        document.getElementById('clockDisplay').innerText = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+        // Clock is hidden now, but keeping internal time tracker
     }, 1000);
+}
+
+async function fetchWeather() {
+    try {
+        const res = await fetch('https://wttr.in/?format=j1');
+        const data = await res.json();
+        const current = data.current_condition[0];
+        const temp = current.temp_C;
+        const hum = current.humidity;
+        const desc = current.weatherDesc[0].value;
+        document.getElementById('weatherDisplay').innerHTML = `<i class="fa-solid fa-temperature-half"></i> ${temp}°C | <i class="fa-solid fa-droplet"></i> ${hum}% | ${desc}`;
+    } catch(e) {
+        document.getElementById('weatherDisplay').innerText = "Weather Unavailable";
+    }
+}
+
+function speak(text) {
+    if (!voiceEnabled) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.95;
+    utterance.pitch = 1.0;
+    window.speechSynthesis.speak(utterance);
 }
 
 function showToast(message, type = 'success') {
@@ -633,16 +736,29 @@ function loadThresholds() {
     if (localStorage.getItem('wamot_tdsSafe')) {
         limitSafeTds = parseInt(localStorage.getItem('wamot_tdsSafe'));
         limitDangerTds = parseInt(localStorage.getItem('wamot_tdsDanger'));
+        tankEmptyDist = parseInt(localStorage.getItem('wamot_tankEmpty') || 2000);
+        tankFullDist = parseInt(localStorage.getItem('wamot_tankFull') || 200);
+        voiceEnabled = localStorage.getItem('wamot_voice') !== 'off';
     }
     document.getElementById("tdsLimit").value = limitSafeTds;
     document.getElementById("tdsDanger").value = limitDangerTds;
+    document.getElementById("tankEmpty").value = tankEmptyDist;
+    document.getElementById("tankFull").value = tankFullDist;
+    document.getElementById("voiceMode").value = voiceEnabled ? "on" : "off";
 }
 
 function saveThresholds() {
     limitSafeTds = parseInt(document.getElementById("tdsLimit").value);
     limitDangerTds = parseInt(document.getElementById("tdsDanger").value);
+    tankEmptyDist = parseInt(document.getElementById("tankEmpty").value);
+    tankFullDist = parseInt(document.getElementById("tankFull").value);
+    voiceEnabled = document.getElementById("voiceMode").value === "on";
+    
     localStorage.setItem('wamot_tdsSafe', limitSafeTds);
     localStorage.setItem('wamot_tdsDanger', limitDangerTds);
+    localStorage.setItem('wamot_tankEmpty', tankEmptyDist);
+    localStorage.setItem('wamot_tankFull', tankFullDist);
+    localStorage.setItem('wamot_voice', voiceEnabled ? "on" : "off");
     
     // Hande refresh interval update
     const newInterval = parseInt(document.getElementById("refreshRate").value);
@@ -764,18 +880,25 @@ async function getData() {
       const data = await res.json();
 
       let tdsVal = data.tds ?? "--";
-      let lvlVal = data.water_level ?? "--";
+      let rawLvl = data.water_level ?? "--";
 
       document.getElementById("tds").innerHTML = `${tdsVal} <span class="unit">ppm</span>`;
-      document.getElementById("level").innerHTML = `${lvlVal} <span class="unit">%</span>`;
-
-      if(lvlVal !== "--") {
-          let clampedLvl = Math.max(0, Math.min(100, parseFloat(lvlVal)));
-          document.getElementById("levelProgress").style.width = clampedLvl + "%";
-          if(clampedLvl < 20) {
-              document.getElementById("levelProgress").style.background = "var(--danger)";
-          } else {
-              document.getElementById("levelProgress").style.background = "var(--primary)";
+      
+      // LEVEL CALCULATION
+      if(rawLvl !== "--") {
+          // Convert raw distance to percentage: (empty - current) / (empty - full)
+          let range = tankEmptyDist - tankFullDist;
+          let percent = ((tankEmptyDist - parseFloat(rawLvl)) / range) * 100;
+          let clampedLvl = Math.max(0, Math.min(100, Math.round(percent)));
+          
+          document.getElementById("level").innerHTML = `${clampedLvl} <span class="unit">%</span>`;
+          document.getElementById("tankWater").style.height = clampedLvl + "%";
+          
+          if(clampedLvl < 20 && !window._lowWaterSpoken) {
+              speak("Warning: Water level is low. Please consider refilling.");
+              window._lowWaterSpoken = true;
+          } else if(clampedLvl >= 20) {
+              window._lowWaterSpoken = false;
           }
       }
 
@@ -800,6 +923,7 @@ function updateWaterStatus(tds) {
     status.className = "status bad";
     if(status.dataset.lastState !== 'bad') {
         showToast(`Warning! TDS Limit Exceeded (${tds} ppm)`, "error");
+        speak("Alert: Water quality has dropped significantly. Total dissolved solids are exceeding safe limits.");
     }
   }
   status.dataset.lastState = status.className.includes('bad') ? 'bad' : 'ok';
@@ -851,6 +975,7 @@ function toggleRelay() {
   const state = document.getElementById("relaySwitch").checked ? "ON" : "OFF";
   setRelay(state);
   showToast(`Motor manually turned ${state}`, "info");
+  speak(`Motor turned ${state}`);
   
   const label = document.getElementById("switchLabel");
   label.innerText = state;
@@ -914,10 +1039,17 @@ async function loadHistory() {
           return;
       }
 
-      chartDataHistory = data; // Crucial for export feature
+      chartDataHistory = data; 
 
-      if(data.length === 0) {
-          showToast("No history records found for this device.", "info");
+      // CONSUMPTION CALCULATION
+      if(data.length > 2) {
+          let totalDrop = 0;
+          for(let i=1; i<data.length; i++) {
+              let diff = data[i].water_level - data[i-1].water_level;
+              // If distance increases, water is dropping
+              if(diff > 0) totalDrop += diff;
+          }
+          document.getElementById('consumption').innerHTML = `${Math.round(totalDrop)} <span class="unit">units</span>`;
       }
 
       const labels = data.map(d => new Date(d.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
