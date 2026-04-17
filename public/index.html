@@ -132,7 +132,7 @@ h2 { color: var(--primary); margin-top: 0; font-weight: 700; display: flex; alig
 }
 input {
   width: 100%;
-  padding: 14px 14px 14px 45px;
+  padding: 14px 45px 14px 45px;
   border-radius: 12px;
   border: 1px solid var(--card-border);
   background: var(--input-bg);
@@ -319,7 +319,7 @@ input:checked + .slider:before { transform: translateX(28px); }
   box-shadow: 0 4px 15px var(--primary-glow);
   color: #fff;
 }
-.disabled { opacity: 0.5; pointer-events: none; }
+.mode-disabled { opacity: 0.5; pointer-events: none; }
 .switch-label { font-weight: 700; font-size: 18px; width: 50px; text-align: left;}
 
 /* CHART */
@@ -430,7 +430,7 @@ canvas { width: 100% !important; height: 100% !important; }
               <button class="mode-btn" id="btnManual" onclick="setMode('MANUAL')">Manual</button>
             </div>
             
-            <div id="switchContainer" class="switch-container disabled" style="margin-top: 10px;">
+            <div id="switchContainer" class="switch-container" style="margin-top: 10px;">
               <span style="font-weight:600; color:var(--text-muted);">Relay:</span>
               <label class="switch">
                 <input type="checkbox" id="relaySwitch" onchange="toggleRelay()">
@@ -648,7 +648,7 @@ async function login() {
 
 async function syncData() {
     const syncIcon = document.getElementById("syncIcon");
-    syncIcon.classList.add("syncing");
+    if(syncIcon) syncIcon.classList.add("syncing");
     
     await Promise.all([
         getData(),
@@ -656,7 +656,7 @@ async function syncData() {
         getRelayState()
     ]);
     
-    setTimeout(() => { syncIcon.classList.remove("syncing"); }, 500);
+    if(syncIcon) setTimeout(() => { syncIcon.classList.remove("syncing"); }, 500);
 }
 
 async function getData() {
@@ -688,7 +688,6 @@ async function getData() {
           updateWaterStatus(parseFloat(tdsVal));
       }
   } catch(e) {
-      // Background logic errors can be silent to avoid spamming
   }
 }
 
@@ -704,7 +703,6 @@ function updateWaterStatus(tds) {
   } else {
     status.innerHTML = '<i class="fa-solid fa-skull-crossbones"></i> Danger (Not Drinkable)';
     status.className = "status bad";
-    // Fire a threshold warning notification if it transitions to danger
     if(status.dataset.lastState !== 'bad') {
         showToast(`Warning! TDS Limit Exceeded (${tds} ppm)`, "error");
     }
@@ -733,24 +731,27 @@ function updateRelayUI(state) {
 
   if (state === "ON") {
     sw.checked = true;
-    box.classList.remove("disabled");
+    box.classList.remove("mode-disabled");
     label.innerText = "ON";
     label.style.color = "var(--primary)";
   } else if (state === "OFF") {
     sw.checked = false;
-    box.classList.remove("disabled");
+    box.classList.remove("mode-disabled");
     label.innerText = "OFF";
     label.style.color = "var(--text-muted)";
   } else {
-    // AUTO logic is mostly visual in disabled state
-    box.classList.add("disabled");
+    box.classList.add("mode-disabled");
     label.innerText = "AUTO";
     label.style.color = "var(--text-muted)";
   }
 }
 
 function toggleRelay() {
-  if(currentMode === "AUTO") return; // Safety check
+  if(currentMode === "AUTO") {
+      showToast("Overriding AUTO mode...", "info");
+      setMode("MANUAL");
+  }
+  
   manualOverride = true;
   const state = document.getElementById("relaySwitch").checked ? "ON" : "OFF";
   setRelay(state);
@@ -772,14 +773,14 @@ function setMode(mode) {
 
   if (mode === "AUTO") {
     document.getElementById("btnAuto").classList.add("active");
-    document.getElementById("switchContainer").classList.add("disabled");
+    document.getElementById("switchContainer").classList.add("mode-disabled");
     document.getElementById("switchLabel").innerText = "AUTO";
     document.getElementById("switchLabel").style.color = "var(--text-muted)";
     setRelay("AUTO");
     showToast("System switched to AUTO mode", "success");
   } else {
     document.getElementById("btnManual").classList.add("active");
-    document.getElementById("switchContainer").classList.remove("disabled");
+    document.getElementById("switchContainer").classList.remove("mode-disabled");
     showToast("System switched to MANUAL mode", "info");
   }
 
@@ -807,6 +808,8 @@ async function loadHistory() {
       });
 
       const data = await res.json();
+      if(!Array.isArray(data)) return;
+
       chartDataHistory = data; 
 
       const labels = data.map(d => new Date(d.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
@@ -819,7 +822,9 @@ async function loadHistory() {
 function drawChart(labels, values) {
   if (chart) chart.destroy();
 
-  const ctx = document.getElementById("chart").getContext("2d");
+  const canvas = document.getElementById("chart");
+  if(!canvas) return;
+  const ctx = canvas.getContext("2d");
 
   const gradient = ctx.createLinearGradient(0, 0, 0, 400);
   gradient.addColorStop(0, 'rgba(56,189,248,0.5)');
@@ -851,8 +856,7 @@ function drawChart(labels, values) {
           x: { grid: { color: 'rgba(148, 163, 184, 0.1)' } },
           y: { 
               grid: { color: 'rgba(148, 163, 184, 0.1)' },
-              beginAtZero: true,
-              max: 100
+              beginAtZero: true
           }
       }
     }
